@@ -1,0 +1,98 @@
+//5 banker
+#include <iostream>
+using namespace std;
+
+int n, m;  // number of processes, resources
+int alloc[20][20], maxReq[20][20], need[20][20], avail[20];
+int safeSeq[20], finishArr[20];
+
+// Function 1: Input
+void input() {
+    cout << "Enter number of processes: ";
+    cin >> n;
+
+    cout << "Enter number of resources: ";
+    cin >> m;
+
+    cout << "\nEnter Allocation Matrix:\n";
+    for(int i=0;i<n;i++)
+        for(int j=0;j<m;j++)
+            cin >> alloc[i][j];
+
+    cout << "\nEnter Max Requirement Matrix:\n";
+    for(int i=0;i<n;i++)
+        for(int j=0;j<m;j++)
+            cin >> maxReq[i][j];
+
+    cout << "\nEnter Available Resources:\n";
+    for(int i=0;i<m;i++)
+        cin >> avail[i];
+}
+
+// Function 2: Calculate Need = Max - Allocation
+void calculateNeed() {
+    for(int i=0;i<n;i++)
+        for(int j=0;j<m;j++)
+            need[i][j] = maxReq[i][j] - alloc[i][j];
+}
+
+// Function 3: Check if system is in safe state
+bool isSafe() {
+    for(int i=0;i<n;i++)
+        finishArr[i] = 0;
+
+    int count = 0;
+
+    while(count < n) {
+        bool found = false;
+
+        for(int i=0;i<n;i++) {
+            if(!finishArr[i]) {
+                bool canRun = true;
+
+                for(int j=0;j<m;j++) {
+                    if(need[i][j] > avail[j]) {
+                        canRun = false;
+                        break;
+                    }
+                }
+
+                if(canRun) {
+                    for(int j=0;j<m;j++)
+                        avail[j] += alloc[i][j];   // release resources
+
+                    safeSeq[count++] = i;
+                    finishArr[i] = 1;
+                    found = true;
+                }
+            }
+        }
+
+        if(!found) return false;  // No safe sequence exists
+    }
+
+    return true;
+}
+
+// Function 4: Print Safe Sequence
+void printSafeSequence() {
+    cout << "\nSafe Sequence: ";
+    for(int i=0;i<n;i++)
+        cout << "P" << safeSeq[i] << " ";
+    cout << "\n";
+}
+
+// MAIN
+int main() {
+    input();
+    calculateNeed();
+
+    if(isSafe()) {
+        cout << "\nSystem is in SAFE STATE.\n";
+        printSafeSequence();
+    } else {
+        cout << "\nSystem is NOT in SAFE STATE.\n";
+    }
+
+    return 0;
+}

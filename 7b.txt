@@ -1,0 +1,49 @@
+// server.cpp
+#include <iostream>
+#include <sys/ipc.h>
+#include <sys/shm.h>
+#include <cstring>
+using namespace std;
+
+int main() {
+    key_t key = ftok("shmfile", 65);       // generate unique key
+    int shmid = shmget(key, 1024, 0666 | IPC_CREAT); // create shared memory
+
+    char *str = (char*) shmat(shmid, NULL, 0);       // attach
+
+    cout << "Enter message to write in shared memory:\n";
+    string msg;
+    getline(cin, msg);
+
+    strcpy(str, msg.c_str());              // write message to shared memory
+
+    cout << "Message written to shared memory.\n";
+
+    shmdt(str);                            // detach
+
+    return 0;
+}
+
+//client.cpp
+#include <iostream>
+#include <sys/ipc.h>
+#include <sys/shm.h>
+using namespace std;
+
+int main() {
+    key_t key = ftok("shmfile", 65);       // same key as server
+
+    int shmid = shmget(key, 1024, 0666);   // get shared memory
+
+    char *str = (char*) shmat(shmid, NULL, 0);  // attach
+
+    cout << "Message read from shared memory:\n";
+    cout << str << endl;
+
+    shmdt(str);                             // detach
+
+    // optional: server usually deletes shared memory
+    // shmctl(shmid, IPC_RMID, NULL);
+
+    return 0;
+}

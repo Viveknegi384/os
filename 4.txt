@@ -1,0 +1,117 @@
+//4a producer-consumer
+#include <iostream>
+#include <thread>
+#include <mutex>
+#include <semaphore.h>
+#include <unistd.h>
+using namespace std;
+
+#define BUFFER_SIZE 5
+
+int buffer[BUFFER_SIZE];
+int in_ = 0, out_ = 0;
+
+sem_t empty_slots;      // counts empty positions
+sem_t full_slots;       // counts filled positions
+mutex mtx;              // C++ mutex
+
+void producer() {
+    int item = 1;
+    while(true) {
+        sem_wait(&empty_slots);      // wait for empty slot
+        mtx.lock();                  // lock critical section
+
+        buffer[in_] = item;
+        cout << "Producer produced: " << item << endl;
+        in_ = (in_ + 1) % BUFFER_SIZE;
+        item++;
+
+        mtx.unlock();                // unlock
+        sem_post(&full_slots);       // increase filled count
+
+        sleep(1);
+    }
+}
+
+void consumer() {
+    while(true) {
+        sem_wait(&full_slots);       // wait for filled slot
+        mtx.lock();                  // lock critical section
+
+        int item = buffer[out_];
+        cout << "Consumer consumed: " << item << endl;
+        out_ = (out_ + 1) % BUFFER_SIZE;
+
+        mtx.unlock();
+        sem_post(&empty_slots);      // increase empty count
+
+        sleep(1);
+    }
+}
+
+int main() {
+    // init semaphores
+    sem_init(&empty_slots, 0, BUFFER_SIZE);
+    sem_init(&full_slots, 0, 0);
+
+    // threads
+    thread prod(producer);
+    thread cons(consumer);
+
+    prod.join();
+    cons.join();
+
+    // cleanup
+    sem_destroy(&empty_slots);
+    sem_destroy(&full_slots);
+
+    return 0;
+}
+
+//4b dinner.cpp
+#include <iostream>
+#include <thread>
+#include <mutex>
+#include <unistd.h>
+
+using namespace std;
+
+const int N = 5;  // number of philosophers
+mutex chopstick[N];  // one mutex per chopstick
+
+void philosopher(int id) {
+    while(true) {
+        cout << "Philosopher " << id << " is thinking\n";
+        sleep(1);
+
+        int left = id;
+        int right = (id + 1) % N;
+
+        // Avoid deadlock by always picking lower-numbered chopstick first
+        int first  = min(left, right);
+        int second = max(left, right);
+
+        chopstick[first].lock();
+        chopstick[second].lock();
+
+        cout << "Philosopher " << id << " is eating\n";
+        sleep(1);
+
+        chopstick[second].unlock();
+        chopstick[first].unlock();
+
+        cout << "Philosopher " << id << " finished eating\n";
+    }
+}
+
+int main() {
+    thread t[N];
+
+    for(int i=0; i<N; i++)
+        t[i] = thread(philosopher, i);
+
+    for(int i=0; i<N; i++)
+        t[i].join();
+
+    return 0;
+}

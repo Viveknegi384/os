@@ -1,0 +1,210 @@
+//zombie orphan
+#include <iostream>
+#include <unistd.h>
+#include <sys/wait.h>
+using namespace std;
+
+// simple bubble sort
+void sortArr(int a[], int n) {
+    for(int i=0;i<n-1;i++)
+        for(int j=0;j<n-1-i;j++)
+            if(a[j] > a[j+1]) swap(a[j], a[j+1]);
+}
+
+void printArr(int a[], int n, const char* who, int pid){
+    cout << "[" << who << " PID=" << pid << "] ";
+    for(int i=0;i<n;i++) cout << a[i] << " ";
+    cout << "\n";
+}
+
+// ZOMBIE demo: child exits, parent waits later
+void zombieDemo() {
+    cout << "\n--- Zombie Demo ---\n";
+    int pid = fork();
+    if(pid==0) {
+        cout << "Child exiting now → will become ZOMBIE briefly.\n";
+        _exit(0);
+    }
+    else {
+        cout << "Parent sleeping 5 seconds. Check using: ps -o pid,ppid,state -p " << pid << "\n";
+        sleep(5);
+        wait(NULL);
+        cout << "Zombie cleared after wait().\n";
+    }
+}
+
+// ORPHAN demo: parent exits first
+void orphanDemo() {
+    cout << "\n--- Orphan Demo ---\n";
+    int pid = fork();
+    if(pid==0) {
+        cout << "Child initial PPID=" << getppid() << "\n";
+        sleep(5);
+        cout << "After parent exit, new PPID=" << getppid() << " (adopted)\n";
+        _exit(0);
+    }
+    else {
+        cout << "Parent exiting → child becomes orphan.\n";
+        _exit(0);
+    }
+}
+
+int main() {
+
+    cout << "\n===== MENU =====\n";
+    cout << "1. Normal Sorting using fork()\n";
+    cout << "2. Zombie Process Demo\n";
+    cout << "3. Orphan Process Demo\n";
+    cout << "Choose option: ";
+
+    int choice;
+    cin >> choice;
+
+    if(choice == 2) { zombieDemo(); return 0; }
+    if(choice == 3) { orphanDemo(); return 0; }
+
+    // Normal sorting
+    int n;
+    cout << "\nEnter number of integers: ";
+    cin >> n;
+
+    int a[n], b[n];
+    cout << "Enter integers: ";
+    for(int i=0;i<n;i++) cin >> a[i], b[i] = a[i];
+
+    int pid = fork();
+
+    if(pid == 0) {
+        printArr(a, n, "Child before sort", getpid());
+        sortArr(a, n);
+        printArr(a, n, "Child after sort", getpid());
+        _exit(0);
+    }
+    else {
+        printArr(b, n, "Parent before sort", getpid());
+        sortArr(b, n);
+        printArr(b, n, "Parent after sort", getpid());
+        wait(NULL);
+        cout << "\nParent: Child process finished.\n";
+    }
+
+    return 0;
+}
+
+
+//2b child.cpp
+#include <iostream>
+using namespace std;
+
+int binarySearch(int a[], int n, int x){
+    int l = 0, r = n - 1;
+    while(l <= r){
+        int mid = (l + r) / 2;
+        if(a[mid] == x) return mid;
+        if(a[mid] < x) l = mid + 1;
+        else r = mid - 1;
+    }
+    return -1;
+}
+
+int main(int argc, char* argv[]) {
+    // argv format: ./child n a1 a2 a3 ... an target
+
+    int index = 1;
+    int n = stoi(argv[index++]);
+
+    int arr[n];
+    for(int i=0;i<n;i++)
+        arr[i] = stoi(argv[index++]);
+
+    int target = stoi(argv[index]);
+
+    cout << "\nChild Program (Binary Search)\n";
+    cout << "Received sorted array: ";
+    for(int i=0;i<n;i++) cout << arr[i] << " ";
+    cout << "\nSearching for: " << target << "\n";
+
+    int pos = binarySearch(arr, n, target);
+
+    if(pos != -1)
+        cout << "Element found at index " << pos << "\n";
+    else
+        cout << "Element NOT found\n";
+
+    return 0;
+}
+
+//2b parent.cpp
+#include <iostream>
+#include <unistd.h>
+#include <sys/wait.h>
+#include <vector>
+using namespace std;
+
+void bubbleSort(int a[], int n)
+{
+    for (int i = 0; i < n - 1; i++)
+        for (int j = 0; j < n - 1 - i; j++)
+            if (a[j] > a[j + 1])
+                swap(a[j], a[j + 1]);
+}
+
+int main()
+{
+    int n;
+    cout << "Enter number of integers: ";
+    cin >> n;
+
+    int arr[n];
+    cout << "Enter integers: ";
+    for (int i = 0; i < n; i++)
+        cin >> arr[i];
+
+    bubbleSort(arr, n);
+
+    cout << "Sorted array: ";
+    for (int i = 0; i < n; i++)
+        cout << arr[i] << " ";
+    cout << "\n";
+
+    int pid = fork();
+
+    if (pid == 0)
+    {
+        // CHILD PROCESS
+
+        // Build execve argument list
+        string path = "./child";
+        vector<string> sargs;
+
+        sargs.push_back(path);         // program name
+        sargs.push_back(to_string(n)); // size
+
+        for (int i = 0; i < n; i++)
+            sargs.push_back(to_string(arr[i]));
+
+        int target;
+        cout << "Enter element to search: ";
+        cin >> target;
+
+        sargs.push_back(to_string(target));
+
+        // convert vector<string> to char* for execve
+        vector<char *> args;
+        for (string &s : sargs)
+            args.push_back(const_cast<char *>(s.c_str()));
+        args.push_back(NULL);
+
+        execve(path.c_str(), args.data(), NULL);
+
+        perror("execve failed");
+        _exit(1);
+    }
+    else
+    {
+        wait(NULL);
+        cout << "Parent: Child completed binary search.\n";
+    }
+
+    return 0;
+}

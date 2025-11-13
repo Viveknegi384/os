@@ -1,0 +1,144 @@
+//sjf
+#include <iostream>
+using namespace std;
+
+void sjf(int n, int pid[], int at[], int bt[], int ct[], int tat[], int wt[]) {
+    int done[20] = {0};
+    int time = 0, completed = 0;
+
+    while(completed < n){
+        int idx = -1;
+        int mn = 9999;
+
+        // find shortest job among arrived processes
+        for(int i=0;i<n;i++){
+            if(!done[i] && at[i] <= time && bt[i] < mn){
+                mn = bt[i];
+                idx = i;
+            }
+        }
+
+        if(idx == -1){          // no process arrived
+            time++;
+            continue;
+        }
+
+        // run this selected process
+        time += bt[idx];
+        ct[idx]  = time;
+        tat[idx] = ct[idx] - at[idx];
+        wt[idx]  = tat[idx] - bt[idx];
+
+        done[idx] = 1;
+        completed++;
+    }
+}
+
+int main() {
+    int n;
+    cout << "Enter number of processes: ";
+    cin >> n;
+
+    int pid[20], at[20], bt[20], ct[20], tat[20], wt[20];
+
+    for(int i=0;i<n;i++){
+        pid[i] = i+1;
+        cout << "Enter AT and BT for P" << pid[i] << ": ";
+        cin >> at[i] >> bt[i];
+    }
+
+    // call SJF function
+    sjf(n, pid, at, bt, ct, tat, wt);
+
+    float avgWT = 0;
+
+    cout << "\nPID\tAT\tBT\tCT\tTAT\tWT\n";
+    for(int i=0;i<n;i++){
+        cout << pid[i] << "\t"
+             << at[i] << "\t"
+             << bt[i] << "\t"
+             << ct[i] << "\t"
+             << tat[i] << "\t"
+             << wt[i] << "\n";
+
+        avgWT += wt[i];
+    }
+
+    cout << "\nAverage Waiting Time = " << avgWT / n << "\n";
+
+    return 0;
+}
+
+//rr 
+#include <iostream>
+#include <queue>
+using namespace std;
+void rr(int n,int at[],int bt[], int ct[], int tat[], int wt[] , int tq){
+  queue<int>q;
+  int rem[20];
+  for(int i=0;i<n;i++){
+    rem[i]=bt[i];
+  }
+  int time=0,completed=0,pid=0;
+  while(completed<n){
+    //insert to ready queue
+    while(pid<n && at[pid]<=time){
+      q.push(pid);
+      pid++;
+    }      
+    //check queue
+    if(q.empty()){
+      time=at[pid];
+      continue;
+    }
+    int i= q.front();
+    q.pop();
+
+    // running
+    int run=min(tq,rem[i]);
+    rem[i]-=run;
+    time+=run;
+
+    //inserting process that arrived during execution
+    while(pid<n && at[pid]<=time){
+      q.push(pid);
+      pid++;
+    }
+
+    if(rem[i]>0){
+      q.push(i);
+    }else{
+      ct[i]=time;
+      tat[i]=ct[i]-at[i];
+      wt[i]=tat[i]-bt[i];
+      completed++;
+    }
+  }
+}
+int main(){
+  int n;
+  cout<<"enter no. of process: ";
+  cin>>n;
+  int pid[20], at[20], bt[20], ct[20],tat[20], wt[20] , tq;
+  for(int i=0;i<n;i++){
+    pid[i]=i+1;
+    cout<<"enter AT and BT of P"<<pid[i]<<": ";
+    cin>>at[i]>>bt[i];
+  }
+  cout<<"enter the time quantum: ";
+  cin>>tq;
+  rr(n,at,bt,ct,tat,wt,tq);
+  float avgwt=0;
+  cout<<"PID\tAT\tBT\tCT\tTAT\tWT\n";
+  for(int i=0;i<n;i++){
+    cout<<pid[i]<<"\t"
+    <<at[i]<<"\t"
+    <<bt[i]<<"\t"
+    <<ct[i]<<"\t"
+    <<tat[i]<<"\t"
+    <<wt[i]<<"\n";
+    avgwt+=wt[i];
+  }
+  cout<<"average waiting time is: "<<avgwt/n;
+
+}

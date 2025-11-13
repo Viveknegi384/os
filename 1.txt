@@ -1,0 +1,171 @@
+//address book
+
+
+var=1
+while [ $var -eq 1 ] 
+do
+	echo "1.CREATE 2.INSERT 3.VIEW 4.SEARCH 5.UPDATE 6.DELETE 7.EXIT"
+	read choice
+	
+	case $choice in
+		1)  touch record.txt
+			echo "File Created";;
+			
+		2)  	echo "REGNO TO INSERT:"	
+		    read regno
+		    grep $regno record.txt  > temp
+		    if [ -s temp ]
+            then 
+			   	    echo "Duplicate Data Found"
+ 			else
+ 					read -p "NAME" name
+					read -p "CITY" city
+		 		    read -p "MOBILE" mobile
+		 		    grep -v "$regno" record.txt > new.txt
+		 		    mv new.txt record.txt
+		 		    echo "$regno $name $city $mobile" >> record.txt 	
+ 					
+ 			fi
+ 			;;
+		   	
+		3)  echo "REG NAME CITY MOBILE"
+			cat record.txt;;
+			
+		4)  echo "REGNO TO SEARCH:"	
+		    read regno
+		    grep -w $regno record.txt  > temp
+		    if [ -s temp ]
+            then 
+ 					cat temp
+ 			else
+ 					echo "No data found with the particular reg no"
+ 			fi;;
+		   
+		   
+		5)  echo "REGNO TO UPDATE:"	
+		    read regno
+		    grep $regno record.txt  > temp
+		    if [ -s temp ]
+            then 
+			   	    read -p "NAME" name
+					read -p "CITY" city
+		 		    read -p "MOBILE" mobile
+		 		    grep -v "$regno" record.txt > new.txt
+		 		    mv new.txt record.txt
+		 		    echo "$regno $name $city $mobile" >> record.txt 	
+ 			else
+ 					echo "No data found with the particular reg no"
+ 			fi
+ 			
+ 			
+		;;
+		6) echo "REGNO TO DELETE:"	
+		    read regno
+		    grep $regno record.txt  > temp
+		    if [ -s temp ]
+            then 
+					grep -v "$regno" record.txt > new.txt
+		 		    mv new.txt record.txt
+		 		    echo "record Deleted"
+		 	else
+ 					echo "No data found with the particular reg no"
+ 			fi
+		;;
+		7) break;;	
+		*) ;;
+	esac
+
+
+echo "Press 1 to Continue"
+read var
+done
+
+
+//employee
+
+var=1
+while [ $var -eq 1 ]
+do
+
+echo "1.Create 2.View 3.Insert 4.Delete 5.Update 6.Exit"
+read choice
+
+case $choice in 
+1)
+touch 2.txt
+echo "File Created"
+;;
+
+2)
+echo "EmpID Name Mobile Department"
+cat 2.txt
+
+;;
+
+3)
+read -p "Enter Regno: " regno
+grep -w "$regno" 2.txt > temp
+if [ -s temp ]
+then 
+echo "Duplicate Found!!"
+
+else
+read -p "Name : " name
+read -p "Mobile : " mobile
+read -p "Department : " dept
+grep -v -w "$regno" 2.txt > new.txt
+mv new.txt 2.txt
+echo "$regno $name $mobile $dept" >> 2.txt
+
+fi
+;;
+
+4)
+read -p "Enter Regno: " regno
+grep -w "$regno" 2.txt > temp
+if [ -s temp ]
+then 
+grep -v -w "$regno" 2.txt > new.txt
+mv new.txt 2.txt
+echo "Deleted File"
+else
+echo "No record Found"
+
+fi
+
+;;
+
+5)
+read -p "Enter Regno: " regno
+grep -w "$regno" 2.txt > temp
+if [ -s temp ]
+then 
+read -p "Name : " name
+read -p "Mobile : " mobile
+read -p "Department : " dept
+grep -v -w "$regno" 2.txt > new.txt
+mv new.txt 2.txt
+echo "$regno $name $mobile $dept" >> 2.txt
+echo "Updated Record"
+else
+echo "No record Found"
+fi
+;;
+
+6) echo "Exiting Program..."
+break
+;;
+*) echo "Inavlid Option " ;; 
+
+esac
+
+
+
+
+
+
+echo "press 1 to continue"
+read var
+
+done
+

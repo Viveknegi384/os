@@ -1,0 +1,248 @@
+//fifo and lru
+#include <iostream>
+using namespace std;
+
+void fcfs(int pages[], int n, int frameSize) {
+    int frame[10], index = 0, faults = 0;
+
+    for(int i=0;i<frameSize;i++)
+        frame[i] = -1;
+
+    cout << "\nFCFS Page Replacement:\n";
+
+    for(int i=0;i<n;i++) {
+        bool found = false;
+
+        // Check if already in frame
+        for(int j=0;j<frameSize;j++) {
+            if(frame[j] == pages[i]) {
+                found = true;
+                break;
+            }
+        }
+
+        if(!found) {
+            frame[index] = pages[i];
+            index = (index + 1) % frameSize;
+            faults++;
+        }
+
+        cout << "After page " << pages[i] << " : ";
+        for(int j=0;j<frameSize;j++)
+            cout << frame[j] << " ";
+        cout << "\n";
+    }
+
+    cout << "Total Page Faults (FCFS): " << faults << "\n";
+}
+
+// ------------------ LRU ------------------
+
+int findLRU(int time[], int frameSize) {
+    int min = time[0], pos = 0;
+    for(int i=1;i<frameSize;i++) {
+        if(time[i] < min) {
+            min = time[i];
+            pos = i;
+        }
+    }
+    return pos;
+}
+
+void lru(int pages[], int n, int frameSize) {
+    int frame[10], time[10];
+    int faults = 0, counter = 0;
+
+    for(int i=0;i<frameSize;i++)
+        frame[i] = -1;
+
+    cout << "\nLRU Page Replacement:\n";
+
+    for(int i=0;i<n;i++) {
+        bool found = false;
+
+        // check if page exists
+        for(int j=0;j<frameSize;j++) {
+            if(frame[j] == pages[i]) {
+                found = true;
+                time[j] = ++counter;  
+                break;
+            }
+        }
+
+        if(!found) {
+            int pos = -1;
+
+            // find an empty frame
+            for(int j=0;j<frameSize;j++) {
+                if(frame[j] == -1) {
+                    pos = j;
+                    break;
+                }
+            }
+
+            if(pos == -1)        // no empty frame → replace LRU
+                pos = findLRU(time, frameSize);
+
+            frame[pos] = pages[i];
+            time[pos] = ++counter;
+            faults++;
+        }
+
+        cout << "After page " << pages[i] << " : ";
+        for(int j=0;j<frameSize;j++)
+            cout << frame[j] << " ";
+        cout << "\n";
+    }
+
+    cout << "Total Page Faults (LRU): " << faults << "\n";
+}
+
+int main() {
+    int pages[20], n = 17, frameSize;
+
+    cout << "Enter 17 page requests:\n";
+    for(int i=0;i<n;i++)
+        cin >> pages[i];
+
+    cout << "Enter frame size (min 3): ";
+    cin >> frameSize;
+
+    fcfs(pages, n, frameSize);
+    lru(pages, n, frameSize);
+
+    return 0;
+}
+
+//fifo and optimal
+#include <iostream>
+using namespace std;
+
+// ------------------------ FCFS ------------------------
+void fcfs(int pages[], int n, int frameSize) {
+    int frame[10], index = 0, faults = 0;
+
+    for(int i = 0; i < frameSize; i++)
+        frame[i] = -1;
+
+    cout << "\nFCFS Page Replacement:\n";
+
+    for(int i = 0; i < n; i++) {
+        bool found = false;
+
+        // check if page already present
+        for(int j = 0; j < frameSize; j++) {
+            if(frame[j] == pages[i]) {
+                found = true;
+                break;
+            }
+        }
+
+        if(!found) {
+            frame[index] = pages[i];
+            index = (index + 1) % frameSize;
+            faults++;
+        }
+
+        cout << "After page " << pages[i] << " : ";
+        for(int j = 0; j < frameSize; j++)
+            cout << frame[j] << " ";
+        cout << "\n";
+    }
+
+    cout << "Total Page Faults (FCFS) = " << faults << "\n";
+}
+
+// ------------------------ OPTIMAL ------------------------
+int findOptimal(int pages[], int frame[], int frameSize, int curr, int n) {
+    int pos = -1, farthest = curr;
+
+    for(int i = 0; i < frameSize; i++) {
+        int j;
+        for(j = curr; j < n; j++) {
+            if(frame[i] == pages[j]) {
+                if(j > farthest) {
+                    farthest = j;
+                    pos = i;
+                }
+                break;
+            }
+        }
+        // If a frame page is never used again, replace it immediately
+        if(j == n)
+            return i;
+    }
+
+    if(pos == -1)
+        return 0; // If all pages are going to be used, replace the first one   
+    else
+        return pos;
+}
+
+void optimal(int pages[], int n, int frameSize) {
+    int frame[10], faults = 0;
+
+    for(int i = 0; i < frameSize; i++)
+        frame[i] = -1;
+
+    cout << "\nOPTIMAL Page Replacement:\n";
+
+    for(int i = 0; i < n; i++) {
+        bool found = false;
+
+        // check if page is already present
+        for(int j = 0; j < frameSize; j++) {
+            if(frame[j] == pages[i]) {
+                found = true;
+                break;
+            }
+        }
+
+        if(!found) {
+            int pos = -1;
+
+            // find empty frame
+            for(int j = 0; j < frameSize; j++) {
+                if(frame[j] == -1) {
+                    pos = j;
+                    break;
+                }
+            }
+
+            if(pos == -1)
+                pos = findOptimal(pages, frame, frameSize, i + 1, n);
+
+            frame[pos] = pages[i];
+            faults++;
+        }
+
+        cout << "After page " << pages[i] << " : ";
+        for(int j = 0; j < frameSize; j++)
+            cout << frame[j] << " ";
+        cout << "\n";
+    }
+
+    cout << "Total Page Faults (OPTIMAL) = " << faults << "\n";
+}
+
+// ------------------------ MAIN ------------------------
+int main() {
+    int pages[20], n = 17, frameSize;
+
+    cout << "Enter 17 page requests:\n";
+    for(int i = 0; i < n; i++)
+        cin >> pages[i];
+
+    cout << "Enter frame size (minimum 4): ";
+    cin >> frameSize;
+
+    if(frameSize < 4) {
+        cout << "Frame size must be at least 4!\n";
+        return 0;
+    }
+
+    fcfs(pages, n, frameSize);
+    optimal(pages, n, frameSize);
+
+    return 0;
+}
